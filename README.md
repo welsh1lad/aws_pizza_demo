@@ -39,11 +39,12 @@ It showcases **Terraform for AWS infrastructure**, **GitLab CI/CD for automation
 ```mermaid
 flowchart LR
     subgraph AppVPC["App VPC (EKS Cluster)"]
-        A1["🍕 Order App (Frontend + API)"]
-        A2["📊 Status App (Frontend)"]
         ALB["Application Load Balancer (Ingress)"]
+        A1["🍕 Order App (Frontend + API)"]
+        A2["📊 Status App (Backend service)"]
+
         ALB --> A1
-        ALB --> A2
+        A1 -->|calls internal service| A2
     end
 
     subgraph ServicesVPC["Services VPC (Lambda + SQS)"]
@@ -56,7 +57,8 @@ flowchart LR
     end
 
     A1 -->|send order| SQS1
-    A2 -->|poll status| SQS2
+    A2 -->|fetch status| SQS2
 
     AppVPC <-. VPC Peering .-> ServicesVPC
+
 
