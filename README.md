@@ -8,6 +8,8 @@ It showcases **Terraform for AWS infrastructure**, **GitLab CI/CD for automation
 ---
 
 ## 🚀 Project Overview
+## add png for a simple diagram of the pizza-demo
+![VPC Diagram](aws_pizza_demo.png)
 
 1. **Pizza Order App (App1)** – exposed via ALB  
    - React + FastAPI app.  
@@ -63,5 +65,3 @@ flowchart LR
     AppVPC <-. VPC Peering .-> ServicesVPC
 
 
-## add png for a simple diagram of the pizza-demo
-![VPC Diagram](aws_pizza_demo.png)
