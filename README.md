@@ -43,8 +43,8 @@ It showcases **Terraform for AWS infrastructure**, **GitLab CI/CD for automation
 flowchart LR
     subgraph AppVPC["App VPC (EKS Cluster)"]
         ALB["Application Load Balancer (Ingress)"]
-        A1["🍕 Order App (Frontend + API)"]
-        DB["🗄️ DB (Postgres/Redis in container)"]
+        A1["🍕 Order App (Frontend"]
+        DB["🗄️ DB (Redis in container)"]
 
         ALB --> A1
         A1 -->|query status| DB
@@ -59,6 +59,7 @@ flowchart LR
     end
 
     A1 -->|send order| SQS1
+    A1 -->|reads status| DB
     AppVPC <-. VPC Peering .-> ServicesVPC
 
 
