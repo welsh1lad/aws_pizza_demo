@@ -41,6 +41,7 @@ flowchart LR
     end
 
     subgraph ServiceVPC["service-vpc (Private, EKS)"]
+        A1["🍕 Order App (Frontend/Backend)"]
         EKS["AWS EKS Cluster"]
         SQS1["📥 SQS Queue: pizza-orders"]
         LAMBDA["⚡ Lambda Function (process order)"]
@@ -48,7 +49,7 @@ flowchart LR
 
         EKS --> DB
         SQS1 -->|trigger| LAMBDA
-        LAMBDA -->|write status| DB
+        LAMBDA -->| DB
     end
 
     A1 -->|send order| SQS1
