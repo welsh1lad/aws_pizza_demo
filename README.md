@@ -13,17 +13,17 @@ It showcases **Terraform for AWS infrastructure**, **GitLab CI/CD for automation
 ### 🗺️ Updated Architecture
 
 - **app-vpc**  
-  - Contains the **Application Load Balancer (ALB)** in a **public subnet**.  
-  - Hosts the Pizza Order App (frontend/backend).  
-  - ALB exposes the app to the internet.
+  - Contains only the **Application Load Balancer (ALB)** in a **public subnet**.  
+  - The ALB is public and connects to the backend services in `service-vpc` via VPC peering.
 
 - **service-vpc**  
   - A **private VPC** running **AWS EKS** (Kubernetes).  
-  - Hosts backend services, Lambda functions, and SQS.  
-  - Not directly accessible from the internet.
+  - EKS hosts the Pizza UI (frontend) and backend service (reads Redis DB).
+  - Redis DB is updated by a Lambda function triggered by AWS SQS.
+  - The Pizza UI places orders onto SQS.
 
 - **Networking**  
-  - VPC peering connects `app-vpc` and `service-vpc`.  
+  - VPC peering connects `app-vpc` and `service-vpc`.
   - Only the ALB in `app-vpc` is public; all other resources are private.
 
 ---
@@ -36,24 +36,23 @@ It showcases **Terraform for AWS infrastructure**, **GitLab CI/CD for automation
 flowchart LR
     subgraph AppVPC["app-vpc (Public Subnet)"]
         ALB["Application Load Balancer (Public)"]
-        A1["🍕 Order App (Frontend/Backend)"]
-        ALB --> A1
     end
 
     subgraph ServiceVPC["service-vpc (Private, EKS)"]
-        A1["🍕 Order App (Frontend/Backend)"]
-        EKS["AWS EKS Cluster"]
-        SQS1["📥 SQS Queue: pizza-orders"]
-        LAMBDA["⚡ Lambda Function (process order)"]
-        DB["🗄️ DB (Redis/Postgres in EKS)"]
+        UI["Pizza UI (EKS)"]
+        BE["Backend (EKS, reads Redis)"]
+        REDIS["Redis DB"]
+        SQS["AWS SQS Queue"]
+        LAMBDA["Lambda (triggered by SQS)"]
 
-        EKS --> DB
-        SQS1 -->|trigger| LAMBDA
-        LAMBDA -->| DB
+        UI -->|Order| SQS
+        SQS -->|Trigger| LAMBDA
+        LAMBDA -->|Update| REDIS
+        UI -->|Read Status| BE
+        BE -->|Read| REDIS
     end
 
-    A1 -->|send order| SQS1
-    A1 -->|reads status| DB
+    ALB --> UI
     AppVPC <-. VPC Peering .-> ServiceVPC
 ```
 
@@ -61,28 +60,30 @@ flowchart LR
 
 ## 📦 Components
 
-1. **Pizza Order App (App1)** – exposed via ALB in `app-vpc`  
-   - React + FastAPI app.  
-   - Users place pizza orders → messages pushed to AWS **SQS (`pizza-orders`)**.  
-   - "Status" button queries the DB directly.  
-   - Displays a donut chart of order progress.
+1. **Application Load Balancer (ALB)** – public, in `app-vpc`  
+   - Routes traffic to the Pizza UI running in EKS (`service-vpc`).
 
-2. **Database (DB Container)**  
-   - Postgres/Redis running in the EKS cluster (`service-vpc`).  
-   - Stores the current status of each order.  
-   - Queried directly by App1, updated by Lambda.
+2. **Pizza UI (EKS)**  
+   - Users place pizza orders via the UI.
+   - UI places orders onto AWS SQS.
 
-3. **Lambda Function**  
-   - Triggered by `pizza-orders` SQS queue.  
-   - Simulates pizza preparation stages.  
-   - Updates the DB with the latest status for each order.
+3. **Backend (EKS)**  
+   - Reads order status from Redis DB.
+
+4. **Redis Database**  
+   - Stores the current status of each order.
+   - Updated by Lambda.
+
+5. **Lambda Function**  
+   - Triggered by SQS queue.
+   - Processes orders and updates Redis DB.
 
 ---
 
 ## ⚡ Key Points
 
 - **ALB** is public and lives in `app-vpc`.
-- **EKS** and backend services are private in `service-vpc`.
-- **VPC peering** enables secure communication between app
+- **EKS**, backend, Redis, Lambda, and SQS are private in `service-vpc`.
+- **VPC peering** enables secure communication between ALB and backend services.
 
 
