@@ -10,8 +10,8 @@ variable "region" {
 
 
 variable "platform" {
-    description = "The platform for which the VPC is being created"
-    type        = string
+  description = "The platform for which the VPC is being created"
+  type        = string
 
 }
 
