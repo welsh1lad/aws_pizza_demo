@@ -1,10 +1,12 @@
 resource "aws_eks_cluster" "app_cluster" {
   name     = "app_cluster"
+  version = "1.33"
   role_arn = aws_iam_role.cluster.arn
 
   vpc_config {
     subnet_ids = [
-      module.service_subnet.subnet_ids[0],
+      module.app_subnet.subnet_ids[1],
+      module.app_subnet.subnet_ids[2],
     ]
     endpoint_private_access = true
     endpoint_public_access  = false

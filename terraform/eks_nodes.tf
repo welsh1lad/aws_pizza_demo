@@ -1,7 +1,14 @@
+
+
+data "aws_eks_cluster" "cluster" {
+  name = aws_eks_cluster.app_cluster.name
+}
+
+
 resource "aws_launch_template" "eks-with-disks" {
   name = "eks-with-disks"
 
-  key_name = "<KEY_PAIR_NAME>"
+  key_name = "myKeys"
 
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -16,7 +23,7 @@ resource "aws_launch_template" "eks-with-disks" {
     resource_type = "instance"
 
     tags = {
-      Name = "app-nworker"
+      Name = "app-worker"
     }
   }
 }
@@ -27,11 +34,11 @@ resource "aws_eks_node_group" "private-nodes" {
   node_role_arn   = aws_iam_role.nodes.arn
 
   subnet_ids = [
-    module.app_subnet.subnet_ids[0],
+    module.app_subnet.subnet_ids[1],
   ]
 
   capacity_type  = "ON_DEMAND"
-  instance_types = ["t2.micro"]
+  instance_types = ["t3.large"]
 
   scaling_config {
     desired_size = 3
