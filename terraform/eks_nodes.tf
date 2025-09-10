@@ -1,59 +1,79 @@
-
-
-data "aws_eks_cluster" "cluster" {
-  name = aws_eks_cluster.app_cluster.name
-}
-
-
-resource "aws_launch_template" "eks-with-disks" {
-  name = "eks-with-disks"
-
-  key_name = "myKeys"
+resource "aws_launch_template" "node_template" {
+  name = "eks-node-launch-template"
+  ebs_optimized = true
 
   block_device_mappings {
-    device_name = "/dev/xvda"
+    device_name = "/dev/sdf"
 
     ebs {
-      volume_size = 50
-      volume_type = "gp3"
+      volume_size = 20
     }
   }
+
+  capacity_reservation_specification {
+    capacity_reservation_preference = "open"
+  }
+
+  cpu_options {
+    core_count       = 4
+    threads_per_core = 2
+  }
+
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
+  disable_api_stop        = true
+  disable_api_termination = true
+
+  ## image_id = "ami-dev"
+
+  instance_initiated_shutdown_behavior = "terminate"
+
+  instance_market_options {
+    market_type = "spot"
+  }
+
+  instance_type = "t2.micro"
+
+  ## kernel_id = "dev"
+
+  key_name = var.key_name
+
+##  license_specification {
+##    license_configuration_arn = "arn:aws:license-manager:eu-west-1:123456789012:license-configuration:lic-0123456789abcdef0123456789abcdef"
+##  }
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+
+  monitoring {
+    enabled = true
+  }
+
+  network_interfaces {
+    associate_public_ip_address = true
+  }
+
+  placement {
+    availability_zone = "us-west-2a"
+  }
+
+  ## ram_disk_id = "test"
+
+  vpc_security_group_ids = ["sg-12345678"]
 
   tag_specifications {
     resource_type = "instance"
 
     tags = {
-      Name = "app-worker"
+      Name = "test"
     }
   }
-}
 
-resource "aws_eks_node_group" "private-nodes" {
-  cluster_name    = aws_eks_cluster.app_cluster.name
-  node_group_name = "app-private-nodes"
-  node_role_arn   = aws_iam_role.nodes.arn
-
-  subnet_ids = [
-    module.app_subnet.subnet_ids[1],
-  ]
-
-  capacity_type  = "ON_DEMAND"
-  instance_types = ["t3.large"]
-
-  scaling_config {
-    desired_size = 3
-    max_size     = 3
-    min_size     = 3
-  }
-
-  launch_template {
-    name    = aws_launch_template.eks-with-disks.name
-    version = aws_launch_template.eks-with-disks.latest_version
-  }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.nodes-AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.nodes-AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.nodes-AmazonEC2ContainerRegistryReadOnly,
-  ]
+  ## user_data = filebase64("${path.module}/example.sh")
 }

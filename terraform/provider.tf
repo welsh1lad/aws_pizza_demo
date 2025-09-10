@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   # Configuration options
-  region = var.region
+    region = "eu-west-2"
   default_tags {
     tags = {
       Managed-By  = "Terraform"
